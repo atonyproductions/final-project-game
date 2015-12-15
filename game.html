@@ -8,9 +8,18 @@
 
 <div style="display:none;">
   <img id="background" src="background.png" width="1300" height="600">
+  <img id="menu" src="menu.png" width="1300" height="600">
+  <img id="menu2" src="menu_sel.png" width="1300" height="600">
   <img id="player" src="player.png" width="22" height="22">
   <img id="hit" src="hit.png" width="20" height="20">
   <img id="enemy" src="enemy.png" width="20" height="20">
+  
+  <audio id="menumusic" style="display: none;" src="menumusic.wav" </audio>
+  <audio id="gamemusic" style="display: none;" src="gamemusic.wav" </audio>
+  <audio id="victory" style="display: none;" src="victory.wav" </audio>
+  <audio id="die" style="display: none;" src="die.wav" </audio>
+  <audio id="shoot" style="display: none;" src="shoot.wav" </audio>
+  <audio id="explode" style="display: none;" src="explode.wav" </audio>
 </div>
  
 <script>
@@ -23,13 +32,23 @@
     window.requestAnimationFrame = requestAnimationFrame;
 })();
  
+  //.cloneNode(true).play(); 
+ 
 // setup variables 
 var canvas = document.getElementById("canvas"),
     ctx = canvas.getContext("2d"),
-	img_bg = document.getElementById("background"),
-	img_pc = document.getElementById("player"), 
-	img_hit = document.getElementById("hit"),
-	img_mob = document.getElementById("enemy"),
+	img_bg      = document.getElementById("background"),
+	img_men     = document.getElementById("menu"),
+	img_men2    = document.getElementById("menu2"),
+	img_pc      = document.getElementById("player"), 
+	img_hit     = document.getElementById("hit"),
+	img_mob     = document.getElementById("enemy"),
+	mus_game    = document.getElementById("gamemusic"),
+	mus_menu    = document.getElementById("menumusic"),
+	mus_win     = document.getElementById("win"),
+	mus_shoot   = document.getElementById("shoot"),
+	mus_die     = document.getElementById("die"),
+	mus_explode = document.getElementById("explode"),
     width = 1300,
     height = 600,
     player = {
@@ -68,6 +87,8 @@ var canvas = document.getElementById("canvas"),
 	aggros = [],
 	score = 0,
 	win = false,
+	menu = true,
+	button = false,
     friction = 0.8,
     gravity = 0.3;
  
@@ -359,9 +380,26 @@ passes.push({
 });
 canvas.width = width;
 canvas.height = height;
+mus_menu.play();
 
 // check input, update and render 
 function update() {
+	if (menu == true) {
+		if (mousePos.x > 489 && mousePos.x < 873 && mousePos.y > 435 && mousePos.y < 537) {
+			button = true;
+		}
+		else {
+			button = false;
+		}
+		
+		if (button == true) {
+			ctx.drawImage(img_men2, 0, 0);
+		}
+		else {
+			ctx.drawImage(img_men, 0, 0);
+		}
+	}
+	else {
     // check keys
     if (keys[38] || keys[32] || keys[87]) {
         // up arrow or space
@@ -446,6 +484,9 @@ function update() {
  
         if (dir === "l" || dir === "r" || dir === "b" || dir === "t") {
 			// if collision, reset player (kill them)
+			die.cloneNode(true).play();
+			victory.pause();
+			mus_game.play();
 			player.x = 30;
 			player.y = 10;
             player.velX = 0;
@@ -522,6 +563,9 @@ function update() {
 
 			if (dir === "l" || dir === "r" || dir === "b" || dir === "t") {
 				// if collision, reset player (kill them)
+				die.cloneNode(true).play();
+				victory.pause();
+				mus_game.play();
 				player.x = 30;
 				player.y = 10;
 				player.velX = 0;
@@ -538,6 +582,7 @@ function update() {
 
 			if (dir === "l" || dir === "r" || dir === "b" || dir === "t") {
 				// if collision, "kill" enemy
+				explode.cloneNode(true).play();
 				passes[i].alive = false;
 				score++;
 				if (score >= passes.length) {
@@ -564,6 +609,9 @@ function update() {
 	if (win == true) {
 		ctx.font = '100pt Calibri';
 		ctx.fillText('YOU WIN', width / 2 - 240, height / 2 + 30);
+		mus_game.pause();
+		victory.play();
+	}
 	}
 	
 	// draw crosshair
@@ -587,7 +635,7 @@ function update() {
     ctx.moveTo(mousePos.x+3, mousePos.y+3);
     ctx.lineTo(mousePos.x+10, mousePos.y+10);
     ctx.stroke();
- 
+	
 	// request new frame loop
     requestAnimationFrame(update);
 }
@@ -643,9 +691,17 @@ function getMousePos(canvas, evt) {
 
 // mouse click
 canvas.addEventListener('mousedown', function(evt) {
+	clickPos = getMousePos(canvas, evt);
+	if (menu == true) {
+		if (clickPos.x > 489 && clickPos.x < 873 && clickPos.y > 435 && clickPos.y < 537) {
+			menu = false;
+			mus_menu.pause();
+			mus_game.play();
+		}
+	}
 	if(bullet.alive == false) {
+		shoot.cloneNode(true).play();
 		bullet.alive = true;
-		clickPos = getMousePos(canvas, evt);
 		bullet.x = player.x;
 		bullet.y = player.y;
 		bullet.velX = -1 * (player.x - clickPos.x) / bullet.speed;
